@@ -38,6 +38,12 @@ class HIBP {
         return breach;
       })
     );
+    this._origBreaches = [...this._breaches];
+    return this;
+  }
+
+  reset() {
+    this._breaches = [...this._origBreaches];
     return this;
   }
 
@@ -59,7 +65,8 @@ class HIBP {
    */
   _boolProp(name, bool = true) {
     const fn = breach => breach[name] === !!bool;
-    return this._breaches.filter(fn);
+    this.filter(fn);
+    return this;
   }
 
   /**
@@ -67,7 +74,7 @@ class HIBP {
    * @param {boolean} bool Whether `.IsFabricated` is `true` or `false`. Default: `true`.
    */
   isFabricated(bool = true) {
-    this._breaches = this._boolProp("IsFabricated", bool);
+    this._boolProp("IsFabricated", bool);
     return this;
   }
 
@@ -76,7 +83,7 @@ class HIBP {
    * @param {boolean} bool Whether `.IsRetired` is `true` or `false`. Default: `true`.
    */
   isRetired(bool = true) {
-    this._breaches = this._boolProp("IsRetired", bool);
+    this._boolProp("IsRetired", bool);
     return this;
   }
 
@@ -85,7 +92,7 @@ class HIBP {
    * @param {boolean} bool Whether `.IsSensitive` is `true` or `false`. Default: `true`.
    */
   isSensitive(bool = true) {
-    this._breaches = this._boolProp("IsSensitive", bool);
+    this._boolProp("IsSensitive", bool);
     return this;
   }
 
@@ -94,7 +101,7 @@ class HIBP {
    * @param {boolean} bool Whether `.IsSpamList` is `true` or `false`. Default: `true`.
    */
   isSpamList(bool = true) {
-    this._breaches = this._boolProp("IsSpamList", bool);
+    this._boolProp("IsSpamList", bool);
     return this;
   }
 
@@ -103,7 +110,7 @@ class HIBP {
    * @param {boolean} bool Whether `.IsVerified` is `true` or `false`. Default: `true`.
    */
   isVerified(bool = true) {
-    this._breaches = this._boolProp("IsVerified", bool);
+    this._boolProp("IsVerified", bool);
     return this;
   }
 
@@ -156,11 +163,12 @@ class HIBP {
    *
    * @param {array} arr Properties to "pluck" from the `breach` object.
    */
-  pluck(arr = []) {
+  pluck(...props) {
+    props = props.flat();
     this._breaches = this._breaches.map(breach => {
       const obj = {};
-      for (const key of arr) {
-        obj[key] = breach[key];
+      for (const prop of props) {
+        obj[prop] = breach[prop];
       }
       return obj;
     });
