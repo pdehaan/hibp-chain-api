@@ -10,7 +10,7 @@ async function main() {
     .isVerified()
     .hasDataClass("names", "job-titles")
     .sort("-PwnCount")
-    .pluck("Name", "PwnCount")
+    .pluck("Name", "PwnCount", "AddedDate")
     .breaches();
 
   console.log(breaches);

@@ -1,7 +1,32 @@
 const axios = require("axios");
+const Joi = require("@hapi/joi");
+
+const { array, boolean, date, number, object, string } = Joi.types();
 
 class HIBP {
   static SERVER = "https://monitor.firefox.com/";
+
+  static get schema() {
+    return array.items(
+      object.keys({
+        Name: string,
+        Title: string,
+        Domain: string.hostname().allow(""),
+        AddedDate: date,
+        BreachDate: date,
+        ModifiedDate: date,
+        PwnCount: number.integer(),
+        Description: string,
+        LogoPath: string,
+        DataClasses: array.items(string),
+        IsVerified: boolean,
+        IsFabricated: boolean,
+        IsSensitive: boolean,
+        IsRetired: boolean,
+        IsSpamList: boolean
+      })
+    );
+  }
 
   /**
    * Lookup map of columns-to-datatypes. Mainly used for determining how to sort breach results.
@@ -25,23 +50,20 @@ class HIBP {
   }
 
   /**
-   *
+   * Fetch the breaches from the server endpoint. Do some light datatype converting.
    * @param {string} endpoint URI path for the breaches API. This is slightly different depending on whether you are pinging Monitor or HIBP directly. Defaults to a Firefox Monitor friendly path.
    */
   async getBreaches(endpoint = "/hibp/breaches") {
     const href = new URL(endpoint, HIBP.SERVER).href;
-    this._breaches = await axios.get(href).then(res =>
-      res.data.map(breach => {
-        breach.AddedDate = new Date(breach.AddedDate);
-        breach.BreachDate = new Date(breach.BreachDate);
-        breach.ModifiedDate = new Date(breach.ModifiedDate);
-        return breach;
-      })
-    );
+    // Validate and cast the breach data, according to the schema.
+    this._breaches = await axios.get(href).then(res => this.validate(res.data));
     this._origBreaches = [...this._breaches];
     return this;
   }
 
+  /**
+   * Reset the breach array.
+   */
   reset() {
     this._breaches = [...this._origBreaches];
     return this;
@@ -115,7 +137,7 @@ class HIBP {
   }
 
   /**
-   *
+   * Filter the breaches using a custom function.
    * @param {function} fn An arbitrary sort function to apply to the breach chain. By default should be a noop.
    */
   filter(fn = () => true) {
@@ -124,7 +146,7 @@ class HIBP {
   }
 
   /**
-   *
+   * Filter the breaches by one or more data classes.
    * @param {string|array} dataClass Filter all breaches by a specific data class. NOTE: Data classes are slightly different between Monitor (hypenated, lowercase) and HIBP (Sentence case and space delimited).
    */
   hasDataClass(...dataClasses) {
@@ -136,7 +158,7 @@ class HIBP {
   }
 
   /**
-   *
+   * Filter the breaches by domain name.
    * @param {string} domain A domain filter. Relatively useless, but potentially useful if a site has multiple breaches and you want to quickly filter by both breaches.
    */
   hasDomain(domain) {
@@ -149,7 +171,7 @@ class HIBP {
   }
 
   /**
-   * Filter breaches by `breach.Name`.
+   * Filter breaches by one or more `breach.Name`s.
    * @param {string|array} bool A rest parameter of name(s) to filter.
    */
   name(...names) {
@@ -160,7 +182,7 @@ class HIBP {
   }
 
   /**
-   *
+   * Filter the properties in the breach object.
    * @param {array} arr Properties to "pluck" from the `breach` object.
    */
   pluck(...props) {
@@ -176,7 +198,7 @@ class HIBP {
   }
 
   /**
-   *
+   * Sort breaches using the specified property and direction.
    * @param {string} key The object key to sort by. We "try our best"(tm) to sort intelligently by data types, using a lookup map. NOTE: Instead of specifying a sort direction, you can prefix the key with a minus ("-"), such as "-AddedDate" to sort by `breach.AddedDate` in descending order.
    * @param {number | string} direction Sort direction. Can be "1" or "asc" for ascending, or "-1" or "desc" for descending sort order.
    */
@@ -222,6 +244,14 @@ class HIBP {
 
     this._breaches = this._breaches.sort(fn);
     return this;
+  }
+
+  async validate(data = [], options = {}) {
+    options = Object.assign(
+      { presence: "required", abortEarly: true },
+      options
+    );
+    return HIBP.schema.validateAsync(data, options);
   }
 }
 
