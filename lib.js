@@ -6,47 +6,35 @@ const { array, boolean, date, number, object, string } = Joi.types();
 class HIBP {
   static SERVER = "https://monitor.firefox.com/";
 
+  /**
+   * Breach schema.
+   */
   static get schema() {
-    return array.items(
-      object.keys({
-        Name: string,
-        Title: string,
-        Domain: string.hostname().allow(""),
-        AddedDate: date,
-        BreachDate: date,
-        ModifiedDate: date,
-        PwnCount: number.integer(),
-        Description: string,
-        LogoPath: string,
-        DataClasses: array.items(string),
-        IsVerified: boolean,
-        IsFabricated: boolean,
-        IsSensitive: boolean,
-        IsRetired: boolean,
-        IsSpamList: boolean
-      })
-    );
+    return object.keys({
+      Name: string,
+      Title: string,
+      Domain: string.hostname().allow(""),
+      AddedDate: date,
+      BreachDate: date,
+      ModifiedDate: date,
+      PwnCount: number.integer(),
+      Description: string,
+      LogoPath: string,
+      DataClasses: array.items(string),
+      IsVerified: boolean,
+      IsFabricated: boolean,
+      IsSensitive: boolean,
+      IsRetired: boolean,
+      IsSpamList: boolean
+    });
   }
 
   /**
-   * Lookup map of columns-to-datatypes. Mainly used for determining how to sort breach results.
+   * Lookup map of columns-to-datatypes from schema. Mainly used for determining how to sort breach results.
    */
   static get types() {
-    return new Map(
-      Object.entries({
-        AddedDate: "date",
-        BreachDate: "date",
-        Domain: "string",
-        IsFabricated: "boolean",
-        IsRetired: "boolean",
-        IsSensitive: "boolean",
-        IsSpamList: "boolean",
-        IsVerified: "boolean",
-        ModifiedDate: "date",
-        Name: "string",
-        PwnCount: "number"
-      })
-    );
+    const keys = Object.entries(HIBP.schema.describe().keys);
+    return keys.reduce((map, [key, { type }]) => map.set(key, type), new Map());
   }
 
   /**
@@ -251,7 +239,7 @@ class HIBP {
       { presence: "required", abortEarly: true },
       options
     );
-    return HIBP.schema.validateAsync(data, options);
+    return array.items(HIBP.schema).validateAsync(data, options);
   }
 }
 

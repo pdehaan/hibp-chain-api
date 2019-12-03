@@ -4,8 +4,8 @@ main();
 
 async function main() {
   const breaches = (await new HIBP().getBreaches())
-    .name("MasterDeeds", "Estonia", "WienerBuchereien", "Adobe", "LinkedIn")
-    .hasDomain("")
+    // .name("MasterDeeds", "Estonia", "WienerBuchereien", "Adobe", "LinkedIn")
+    // .hasDomain("")
     .isSensitive(false)
     .isVerified()
     .hasDataClass("names", "job-titles")
