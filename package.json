@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^16.1.8",
-    "axios": "^0.19.0"
+    "axios": "^0.21.1"
   },
   "homepage": "https://github.com/pdehaan/hibp-chain-api#readme",
   "keywords": [],
